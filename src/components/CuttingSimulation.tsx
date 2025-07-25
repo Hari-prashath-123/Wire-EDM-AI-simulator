@@ -1,13 +1,11 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Play, Pause, Square, RotateCcw, RotateCw, Move3D } from 'lucide-react';
-import { ParsedModel } from '../utils/fileParser';
 
 interface SimulationProps {
   isRunning: boolean;
   parameters: any;
   onToggleSimulation: () => void;
   onStopSimulation: () => void;
-  uploadedModel?: ParsedModel | null;
 }
 
 interface Point3D {
@@ -25,8 +23,7 @@ const CuttingSimulation: React.FC<SimulationProps> = ({
   isRunning, 
   parameters, 
   onToggleSimulation, 
-  onStopSimulation,
-  uploadedModel
+  onStopSimulation 
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animationRef = useRef<number>();
@@ -59,13 +56,10 @@ const CuttingSimulation: React.FC<SimulationProps> = ({
     rectangle: generateRectangle3D(0, 0, 0, 80, 60, 20),
     circle: generateCircle3D(0, 0, 0, 40, 20, 32),
     star: generateStar3D(0, 0, 0, 35, 15, 20, 5),
-    hexagon: generateHexagon3D(0, 0, 0, 40, 20),
-    uploaded: uploadedModel ? convertModelToCuttingPath(uploadedModel) : []
+    hexagon: generateHexagon3D(0, 0, 0, 40, 20)
   };
 
-  const [currentShape, setCurrentShape] = useState<keyof typeof shapes3D>(
-    uploadedModel ? 'uploaded' : 'rectangle'
-  );
+  const [currentShape, setCurrentShape] = useState<keyof typeof shapes3D>('rectangle');
   const cuttingPath3D = shapes3D[currentShape];
   const totalPathLength = calculatePath3DLength(cuttingPath3D);
 
@@ -124,23 +118,6 @@ const CuttingSimulation: React.FC<SimulationProps> = ({
       });
     }
     return points;
-  }
-
-  function convertModelToCuttingPath(model: ParsedModel): Point3D[] {
-    // Use the first cutting path from the uploaded model
-    if (model.cuttingPaths.length > 0) {
-      return model.cuttingPaths[0].map(v => ({ x: v.x, y: v.y, z: v.z }));
-    }
-    
-    // Fallback: create a path around the bounding box
-    const box = model.boundingBox;
-    return [
-      { x: box.min.x, y: box.min.y, z: box.max.z },
-      { x: box.max.x, y: box.min.y, z: box.max.z },
-      { x: box.max.x, y: box.max.y, z: box.max.z },
-      { x: box.min.x, y: box.max.y, z: box.max.z },
-      { x: box.min.x, y: box.min.y, z: box.max.z }
-    ];
   }
 
   function calculatePath3DLength(path: Point3D[]): number {
@@ -594,19 +571,7 @@ const CuttingSimulation: React.FC<SimulationProps> = ({
     onStopSimulation();
   };
 
-  // Update current shape when model is uploaded/removed
-  useEffect(() => {
-    if (uploadedModel && currentShape !== 'uploaded') {
-      setCurrentShape('uploaded');
-      resetSimulation();
-    } else if (!uploadedModel && currentShape === 'uploaded') {
-      setCurrentShape('rectangle');
-      resetSimulation();
-    }
-  }, [uploadedModel, currentShape]);
-
   const handleShapeChange = (shape: keyof typeof shapes3D) => {
-    if (shape === 'uploaded' && !uploadedModel) return;
     setCurrentShape(shape);
     resetSimulation();
     onStopSimulation();
@@ -670,27 +635,19 @@ const CuttingSimulation: React.FC<SimulationProps> = ({
         <div>
           <label className="block text-sm font-medium text-gray-300 mb-2">3D Shape:</label>
           <div className="grid grid-cols-2 sm:flex gap-2">
-            {Object.keys(shapes3D).map((shape) => {
-              const isUploaded = shape === 'uploaded';
-              const isDisabled = isUploaded && !uploadedModel;
-              
-              return (
-                <button
-                  key={shape}
-                  onClick={() => handleShapeChange(shape as keyof typeof shapes3D)}
-                  disabled={isDisabled}
-                  className={`px-2 sm:px-3 py-1 rounded text-xs sm:text-sm transition-colors ${
-                    currentShape === shape
-                      ? 'bg-blue-600 text-white'
-                      : isDisabled
-                      ? 'bg-gray-800 text-gray-500 cursor-not-allowed'
-                      : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-                  }`}
-                >
-                  {isUploaded ? 'Custom Model' : shape.charAt(0).toUpperCase() + shape.slice(1)}
-                </button>
-              );
-            })}
+            {Object.keys(shapes3D).map((shape) => (
+              <button
+                key={shape}
+                onClick={() => handleShapeChange(shape as keyof typeof shapes3D)}
+                className={`px-2 sm:px-3 py-1 rounded text-xs sm:text-sm transition-colors ${
+                  currentShape === shape
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                }`}
+              >
+                {shape.charAt(0).toUpperCase() + shape.slice(1)}
+              </button>
+            ))}
           </div>
         </div>
         
@@ -787,10 +744,7 @@ const CuttingSimulation: React.FC<SimulationProps> = ({
         <div className="bg-gray-700 p-2 sm:p-3 rounded">
           <div className="text-gray-300 mb-1">3D Complexity</div>
           <div className="text-purple-400 font-mono">
-            {currentShape === 'uploaded' ? 'Custom' : 
-             currentShape === 'circle' ? 'High' : 
-             currentShape === 'star' ? 'Very High' : 
-             currentShape === 'hexagon' ? 'Medium' : 'Low'}
+            {currentShape === 'circle' ? 'High' : currentShape === 'star' ? 'Very High' : currentShape === 'hexagon' ? 'Medium' : 'Low'}
           </div>
         </div>
         <div className="bg-gray-700 p-2 sm:p-3 rounded">

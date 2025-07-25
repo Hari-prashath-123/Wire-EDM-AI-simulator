@@ -1,13 +1,10 @@
 import React, { useState, useCallback, useMemo } from 'react';
 import { Settings, Zap, Brain, BarChart3 } from 'lucide-react';
 import ParameterPanel from './components/ParameterPanel';
-import FileUploadPanel from './components/FileUploadPanel';
-import Model3DViewer from './components/Model3DViewer';
 import CuttingSimulation from './components/CuttingSimulation';
 import AIModelPanel from './components/AIModelPanel';
 import ResultsPanel from './components/ResultsPanel';
 import { trainSVM, trainANN, trainELM, trainGA, ModelResult } from './utils/aiModels';
-import { ParsedModel } from './utils/fileParser';
 
 interface EDMParameters {
   voltage: number;
@@ -36,8 +33,6 @@ function App() {
   const [trainedModels, setTrainedModels] = useState<Record<string, ModelResult>>({});
   const [predictions, setPredictions] = useState<Record<string, any>>({});
   const [activeTab, setActiveTab] = useState('parameters');
-  const [uploadedModel, setUploadedModel] = useState<ParsedModel | null>(null);
-  const [showCuttingPaths, setShowCuttingPaths] = useState(false);
 
   // Calculate process metrics based on current parameters
   const processMetrics = useMemo(() => {
@@ -108,16 +103,6 @@ function App() {
     setPredictions(prev => ({ ...prev, [modelType]: prediction }));
   };
 
-  const handleModelLoaded = (model: ParsedModel) => {
-    setUploadedModel(model);
-    setShowCuttingPaths(true);
-  };
-
-  const handleModelRemoved = () => {
-    setUploadedModel(null);
-    setShowCuttingPaths(false);
-  };
-
   const tabs = [
     { id: 'parameters', label: 'Parameters', icon: Settings },
     { id: 'simulation', label: 'Simulation', icon: Zap },
@@ -179,17 +164,10 @@ function App() {
         <div className="space-y-6 sm:space-y-8">
           {activeTab === 'parameters' && (
             <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 sm:gap-8">
-              <div className="space-y-6">
-                <ParameterPanel
-                  parameters={parameters}
-                  onParameterChange={handleParameterChange}
-                />
-                <FileUploadPanel
-                  onModelLoaded={handleModelLoaded}
-                  onModelRemoved={handleModelRemoved}
-                  currentModel={uploadedModel}
-                />
-              </div>
+              <ParameterPanel
+                parameters={parameters}
+                onParameterChange={handleParameterChange}
+              />
               <div className="bg-gray-800 p-4 sm:p-6 rounded-lg shadow-xl">
                 <h3 className="text-lg sm:text-xl font-bold text-white mb-4 sm:mb-6">Process Overview</h3>
                 <div className="space-y-3 sm:space-y-4">
@@ -290,40 +268,12 @@ function App() {
           )}
 
           {activeTab === 'simulation' && (
-            <div className="space-y-6">
-              <CuttingSimulation
-                isRunning={isSimulationRunning}
-                parameters={parameters}
-                onToggleSimulation={handleToggleSimulation}
-                onStopSimulation={handleStopSimulation}
-                uploadedModel={uploadedModel}
-              />
-              {uploadedModel && (
-                <div className="bg-gray-800 p-4 sm:p-6 rounded-lg shadow-xl">
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-lg sm:text-xl font-bold text-white">3D Model Preview</h3>
-                    <div className="flex items-center gap-2">
-                      <input
-                        type="checkbox"
-                        id="showCuttingPaths"
-                        checked={showCuttingPaths}
-                        onChange={(e) => setShowCuttingPaths(e.target.checked)}
-                        className="w-4 h-4 text-blue-600 bg-gray-700 border-gray-600 rounded focus:ring-blue-500"
-                      />
-                      <label htmlFor="showCuttingPaths" className="text-sm text-gray-300">
-                        Show Cutting Paths
-                      </label>
-                    </div>
-                  </div>
-                  <Model3DViewer
-                    model={uploadedModel}
-                    showCuttingPaths={showCuttingPaths}
-                    cuttingProgress={cutProgress.current}
-                    isAnimating={isSimulationRunning}
-                  />
-                </div>
-              )}
-            </div>
+            <CuttingSimulation
+              isRunning={isSimulationRunning}
+              parameters={parameters}
+              onToggleSimulation={handleToggleSimulation}
+              onStopSimulation={handleStopSimulation}
+            />
           )}
 
           {activeTab === 'ai' && (
@@ -366,50 +316,10 @@ function App() {
           )}
 
           {activeTab === 'results' && (
-            <div className="space-y-6">
-              <ResultsPanel
-                predictions={predictions}
-                currentParameters={parameters}
-                uploadedModel={uploadedModel}
-              />
-              {uploadedModel && (
-                <div className="bg-gray-800 p-4 sm:p-6 rounded-lg shadow-xl">
-                  <h3 className="text-lg sm:text-xl font-bold text-white mb-4">3D Cutting Analysis</h3>
-                  <Model3DViewer
-                    model={uploadedModel}
-                    showCuttingPaths={true}
-                    cuttingProgress={100}
-                    isAnimating={false}
-                  />
-                  <div className="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm">
-                    <div className="bg-gray-700 p-3 rounded">
-                      <div className="text-gray-300 mb-1">Estimated Cut Time</div>
-                      <div className="text-blue-400 font-mono">
-                        {((uploadedModel.metadata.volume / processMetrics.materialRemovalRate) * 60).toFixed(1)} min
-                      </div>
-                    </div>
-                    <div className="bg-gray-700 p-3 rounded">
-                      <div className="text-gray-300 mb-1">Wire Consumption</div>
-                      <div className="text-green-400 font-mono">
-                        {(uploadedModel.cuttingPaths.length * 0.25).toFixed(2)} m
-                      </div>
-                    </div>
-                    <div className="bg-gray-700 p-3 rounded">
-                      <div className="text-gray-300 mb-1">Material Waste</div>
-                      <div className="text-orange-400 font-mono">
-                        {((uploadedModel.metadata.volume * 0.15)).toFixed(2)} mm³
-                      </div>
-                    </div>
-                    <div className="bg-gray-700 p-3 rounded">
-                      <div className="text-gray-300 mb-1">Cut Complexity</div>
-                      <div className="text-purple-400 font-mono">
-                        {uploadedModel.cuttingPaths.length > 15 ? 'High' : uploadedModel.cuttingPaths.length > 8 ? 'Medium' : 'Low'}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
+            <ResultsPanel
+              predictions={predictions}
+              currentParameters={parameters}
+            />
           )}
         </div>
       </main>

@@ -1,6 +1,5 @@
 import React from 'react';
 import { TrendingUp, Target, Layers, Clock } from 'lucide-react';
-import { ParsedModel } from '../utils/fileParser';
 
 interface Prediction {
   materialRemovalRate: number;
@@ -12,10 +11,9 @@ interface Prediction {
 interface ResultsPanelProps {
   predictions: Record<string, Prediction>;
   currentParameters: any;
-  uploadedModel?: ParsedModel | null;
 }
 
-const ResultsPanel: React.FC<ResultsPanelProps> = ({ predictions, currentParameters, uploadedModel }) => {
+const ResultsPanel: React.FC<ResultsPanelProps> = ({ predictions, currentParameters }) => {
   const metrics = [
     { 
       key: 'materialRemovalRate', 
@@ -134,38 +132,6 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({ predictions, currentParamet
               </div>
             </div>
           </div>
-
-          {uploadedModel && (
-            <div className="bg-gray-700 p-3 sm:p-4 rounded-lg">
-              <h4 className="font-medium text-white mb-3 text-sm sm:text-base">3D Model Analysis</h4>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs sm:text-sm">
-                <div>
-                  <span className="text-gray-400">Model Complexity:</span>
-                  <div className="w-full bg-gray-600 rounded-full h-2 mt-1">
-                    <div 
-                      className="bg-purple-400 h-2 rounded-full" 
-                      style={{ width: `${Math.min(100, (uploadedModel.metadata.faces / 10000) * 100)}%` }}
-                    />
-                  </div>
-                  <div className="text-xs text-gray-400 mt-1">
-                    {uploadedModel.metadata.faces.toLocaleString()} faces
-                  </div>
-                </div>
-                <div>
-                  <span className="text-gray-400">Cutting Efficiency:</span>
-                  <div className="w-full bg-gray-600 rounded-full h-2 mt-1">
-                    <div 
-                      className="bg-green-400 h-2 rounded-full" 
-                      style={{ width: `${Math.max(20, 100 - (uploadedModel.cuttingPaths.length * 2))}%` }}
-                    />
-                  </div>
-                  <div className="text-xs text-gray-400 mt-1">
-                    {uploadedModel.cuttingPaths.length} cutting layers
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
         </div>
       )}
     </div>
