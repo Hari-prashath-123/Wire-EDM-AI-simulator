@@ -129,6 +129,11 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({ predictions, currentParamet
                   <div 
                     className="bg-blue-400 h-2 rounded-full" 
                     style={{ width: `${(currentParameters.current / 50) * 100}%` }}
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
 
           {uploadedModel && (
             <div className="bg-gray-700 p-3 sm:p-4 rounded-lg">
@@ -162,12 +167,6 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({ predictions, currentParamet
             </div>
           )}
         </div>
-      )}
-    </div>
-  );
-};
-
-export default ResultsPanel;
       )}
     </div>
   );
